@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1443620d-c472-4c3b-9d3b-5a2bb3664c31",
+    "liczba_personelu": 16,
+    "liczba_klientow": 60000,
+    "dl_trasy": 1800,
+    "godziny_od": "8:00",
+    "godziny_do": "16:00"
+  },
+  {
+    "id": "647c9bf0-8c08-41b4-9113-c45a0a1e3f9c",
+    "liczba_personelu": 16,
+    "liczba_klientow": 60000,
+    "dl_trasy": 1800,
+    "godziny_od": "8:00",
+    "godziny_do": "16:00"
+  }
+]
