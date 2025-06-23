@@ -1,7 +1,7 @@
 import winston from 'winston';
 import fs from 'fs';
 import path from 'path';
-import { config } from '../config';
+import {config} from '../config';
 
 // Ensure logs directory exists
 const logsDir = path.dirname(config.logsPath.info);
@@ -48,17 +48,15 @@ export const setupLogging = () => {
   });
 
   // Create logger
-  const logger = winston.createLogger({
+  return winston.createLogger({
     level: config.isDev ? 'info' : 'warn',
     format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.json()
+        winston.format.timestamp(),
+        winston.format.json()
     ),
-    defaultMeta: { service: 'railway-coaster' },
+    defaultMeta: {service: 'railway-coaster'},
     transports: [...fileTransports, consoleTransport],
   });
-
-  return logger;
 };
 
 export default setupLogging;
