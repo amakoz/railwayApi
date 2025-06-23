@@ -64,15 +64,15 @@ router.get('/:coasterId', (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const {
-      liczba_personelu,
-      liczba_klientow,
-      dl_trasy,
-      godziny_od,
-      godziny_do
+      staffCount,
+      clientCount,
+      trackLength,
+      hoursFrom,
+      hoursTo
     } = req.body;
 
     // Validate required fields
-    if (!liczba_personelu || !liczba_klientow || !dl_trasy || !godziny_od || !godziny_do) {
+    if (!staffCount || !clientCount || !trackLength || !hoursFrom || !hoursTo) {
       return res.status(400).json({
         success: false,
         error: 'All fields are required'
@@ -81,11 +81,11 @@ router.post('/', async (req, res) => {
 
     // Create a new coaster
     const newCoaster = createCoaster(
-      parseInt(liczba_personelu, 10),
-      parseInt(liczba_klientow, 10),
-      parseInt(dl_trasy, 10),
-      godziny_od,
-      godziny_do
+      parseInt(staffCount, 10),
+      parseInt(clientCount, 10),
+      parseInt(trackLength, 10),
+      hoursFrom,
+      hoursTo
     );
 
     // Add the coaster to storage
@@ -110,10 +110,10 @@ router.put('/:coasterId', async (req, res) => {
   try {
     const { coasterId } = req.params;
     const {
-      liczba_personelu,
-      liczba_klientow,
-      godziny_od,
-      godziny_do
+      staffCount,
+      clientCount,
+      hoursFrom,
+      hoursTo
     } = req.body;
 
     // Get existing coaster
@@ -126,23 +126,23 @@ router.put('/:coasterId', async (req, res) => {
       });
     }
 
-    // Update the coaster (note: dl_trasy cannot be changed)
-    const updates: Partial<Omit<Coaster, 'id' | 'dl_trasy'>> = {};
+    // Update the coaster (note: trackLength cannot be changed)
+    const updates: Partial<Omit<Coaster, 'id' | 'trackLength'>> = {};
 
-    if (liczba_personelu !== undefined) {
-      updates.liczba_personelu = parseInt(liczba_personelu, 10);
+    if (staffCount !== undefined) {
+      updates.staffCount = parseInt(staffCount, 10);
     }
 
-    if (liczba_klientow !== undefined) {
-      updates.liczba_klientow = parseInt(liczba_klientow, 10);
+    if (clientCount !== undefined) {
+      updates.clientCount = parseInt(clientCount, 10);
     }
 
-    if (godziny_od !== undefined) {
-      updates.godziny_od = godziny_od;
+    if (hoursFrom !== undefined) {
+      updates.hoursFrom = hoursFrom;
     }
 
-    if (godziny_do !== undefined) {
-      updates.godziny_do = godziny_do;
+    if (hoursTo !== undefined) {
+      updates.hoursTo = hoursTo;
     }
 
     // Perform the update
@@ -202,7 +202,7 @@ router.get('/:coasterId/wagons', (req, res) => {
 router.post('/:coasterId/wagons', async (req, res) => {
   try {
     const { coasterId } = req.params;
-    const { ilosc_miejsc, predkosc_wagonu } = req.body;
+    const { seatCount, wagonSpeed } = req.body;
 
     // Check if coaster exists
     const coaster = getCoasterById(coasterId);
@@ -215,7 +215,7 @@ router.post('/:coasterId/wagons', async (req, res) => {
     }
 
     // Validate required fields
-    if (!ilosc_miejsc || !predkosc_wagonu) {
+    if (!seatCount || !wagonSpeed) {
       return res.status(400).json({
         success: false,
         error: 'All fields are required'
@@ -225,8 +225,8 @@ router.post('/:coasterId/wagons', async (req, res) => {
     // Create a new wagon
     const newWagon = createWagon(
       coasterId,
-      parseInt(ilosc_miejsc, 10),
-      parseFloat(predkosc_wagonu)
+      parseInt(seatCount, 10),
+      parseFloat(wagonSpeed)
     );
 
     // Add the wagon to storage

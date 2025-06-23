@@ -1,42 +1,42 @@
 [
   {
     "id": "a1b2c3d4-e5f6-4321-87ab-cdef12345678",
-    "liczba_personelu": 18,
-    "liczba_klientow": 50000,
-    "dl_trasy": 2200,
-    "godziny_od": "8:30",
-    "godziny_do": "18:30"
+    "staffCount": 18,
+    "clientCount": 50000,
+    "trackLength": 2200,
+    "hoursFrom": "8:30",
+    "hoursTo": "18:30"
   },
   {
     "id": "b2c3d4e5-f6a7-5432-98bc-defg23456789",
-    "liczba_personelu": 12,
-    "liczba_klientow": 35000,
-    "dl_trasy": 1500,
-    "godziny_od": "9:00",
-    "godziny_do": "17:00"
+    "staffCount": 12,
+    "clientCount": 35000,
+    "trackLength": 1500,
+    "hoursFrom": "9:00",
+    "hoursTo": "17:00"
   },
   {
     "id": "c3d4e5f6-a7b8-6543-09cd-efgh34567890",
-    "liczba_personelu": 24,
-    "liczba_klientow": 75000,
-    "dl_trasy": 3000,
-    "godziny_od": "8:00",
-    "godziny_do": "20:00"
+    "staffCount": 24,
+    "clientCount": 75000,
+    "trackLength": 3000,
+    "hoursFrom": "8:00",
+    "hoursTo": "20:00"
   },
   {
     "id": "d4e5f6a7-b8c9-7654-10de-fghi45678901",
-    "liczba_personelu": 8,
-    "liczba_klientow": 15000,
-    "dl_trasy": 1000,
-    "godziny_od": "10:00",
-    "godziny_do": "16:00"
+    "staffCount": 8,
+    "clientCount": 15000,
+    "trackLength": 1000,
+    "hoursFrom": "10:00",
+    "hoursTo": "16:00"
   },
   {
     "id": "e5f6a7b8-c9d0-8765-21ef-ghij56789012",
-    "liczba_personelu": 30,
-    "liczba_klientow": 90000,
-    "dl_trasy": 4500,
-    "godziny_od": "7:30",
-    "godziny_do": "22:00"
+    "staffCount": 30,
+    "clientCount": 90000,
+    "trackLength": 4500,
+    "hoursFrom": "7:30",
+    "hoursTo": "22:00"
   }
 ]

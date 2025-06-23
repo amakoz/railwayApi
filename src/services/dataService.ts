@@ -155,7 +155,7 @@ const updateCoasterLocal = (updates: Partial<Coaster> & { id: string }): Coaster
     };
 
     // Keep the length of the track constant
-    updatedCoaster.dl_trasy = coasters[index].dl_trasy;
+    updatedCoaster.trackLength = coasters[index].trackLength;
 
     coasters[index] = updatedCoaster;
     fs.writeFileSync(config.dataPath.coasters, JSON.stringify(coasters, null, 2));

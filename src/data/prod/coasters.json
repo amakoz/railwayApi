@@ -1,27 +1,27 @@
 [
   {
     "id": "p1f2e3d4-c5b6-9876-54ab-zyxw12345678",
-    "liczba_personelu": 22,
-    "liczba_klientow": 65000,
-    "dl_trasy": 2500,
-    "godziny_od": "8:00",
-    "godziny_do": "19:00"
+    "staffCount": 22,
+    "clientCount": 65000,
+    "trackLength": 2500,
+    "hoursFrom": "8:00",
+    "hoursTo": "19:00"
   },
   {
     "id": "p2e3d4c5-b6a7-8765-43bc-yxwv23456789",
-    "liczba_personelu": 15,
-    "liczba_klientow": 42000,
-    "dl_trasy": 1800,
-    "godziny_od": "9:30",
-    "godziny_do": "18:30"
+    "staffCount": 15,
+    "clientCount": 42000,
+    "trackLength": 1800,
+    "hoursFrom": "9:30",
+    "hoursTo": "18:30"
   },
   {
     "id": "p3d4c5b6-a7f8-7654-32cd-xwvu34567890",
-    "liczba_personelu": 28,
-    "liczba_klientow": 85000,
-    "dl_trasy": 3600,
-    "godziny_od": "7:30",
-    "godziny_do": "21:30"
+    "staffCount": 28,
+    "clientCount": 85000,
+    "trackLength": 3600,
+    "hoursFrom": "7:30",
+    "hoursTo": "21:30"
   }
 ]
 

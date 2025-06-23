@@ -2,56 +2,56 @@
   {
     "id": "p1w2a3b4-c5d6-7890-12wx-yzab98765432",
     "coasterId": "p1f2e3d4-c5b6-9876-54ab-zyxw12345678",
-    "ilosc_miejsc": 42,
-    "predkosc_wagonu": 1.7
+    "seatCount": 42,
+    "wagonSpeed": 1.7
   },
   {
     "id": "p2w3a4b5-c6d7-8901-23xy-zabc87654321",
     "coasterId": "p1f2e3d4-c5b6-9876-54ab-zyxw12345678",
-    "ilosc_miejsc": 42,
-    "predkosc_wagonu": 1.7
+    "seatCount": 42,
+    "wagonSpeed": 1.7
   },
   {
     "id": "p3w4a5b6-c7d8-9012-34yz-abcd76543210",
     "coasterId": "p1f2e3d4-c5b6-9876-54ab-zyxw12345678",
-    "ilosc_miejsc": 42,
-    "predkosc_wagonu": 1.7
+    "seatCount": 42,
+    "wagonSpeed": 1.7
   },
   {
     "id": "p4w5a6b7-c8d9-0123-45za-bcde65432109",
     "coasterId": "p2e3d4c5-b6a7-8765-43bc-yxwv23456789",
-    "ilosc_miejsc": 32,
-    "predkosc_wagonu": 1.4
+    "seatCount": 32,
+    "wagonSpeed": 1.4
   },
   {
     "id": "p5w6a7b8-c9d0-1234-56ab-cdef54321098",
     "coasterId": "p2e3d4c5-b6a7-8765-43bc-yxwv23456789",
-    "ilosc_miejsc": 32,
-    "predkosc_wagonu": 1.4
+    "seatCount": 32,
+    "wagonSpeed": 1.4
   },
   {
     "id": "p6w7a8b9-c0d1-2345-67bc-defg43210987",
     "coasterId": "p3d4c5b6-a7f8-7654-32cd-xwvu34567890",
-    "ilosc_miejsc": 54,
-    "predkosc_wagonu": 2.0
+    "seatCount": 54,
+    "wagonSpeed": 2.0
   },
   {
     "id": "p7w8a9b0-c1d2-3456-78cd-efgh32109876",
     "coasterId": "p3d4c5b6-a7f8-7654-32cd-xwvu34567890",
-    "ilosc_miejsc": 54,
-    "predkosc_wagonu": 2.0
+    "seatCount": 54,
+    "wagonSpeed": 2.0
   },
   {
     "id": "p8w9a0b1-c2d3-4567-89de-fghi21098765",
     "coasterId": "p3d4c5b6-a7f8-7654-32cd-xwvu34567890",
-    "ilosc_miejsc": 54,
-    "predkosc_wagonu": 2.0
+    "seatCount": 54,
+    "wagonSpeed": 2.0
   },
   {
     "id": "p9w0a1b2-c3d4-5678-90ef-ghij10987654",
     "coasterId": "p3d4c5b6-a7f8-7654-32cd-xwvu34567890",
-    "ilosc_miejsc": 54,
-    "predkosc_wagonu": 2.0
+    "seatCount": 54,
+    "wagonSpeed": 2.0
   }
 ]
 
