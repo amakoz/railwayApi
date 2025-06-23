@@ -29,13 +29,23 @@ RUN yarn install --production
 COPY --from=builder /app/dist ./dist
 
 # Create necessary directories
-RUN mkdir -p logs src/data/prod
+RUN mkdir -p logs data/prod src/data/prod
+
+# Copy initial production data from src/data/prod
+COPY --from=builder /app/src/data/prod/coasters.json /app/data/prod/coasters.json
+COPY --from=builder /app/src/data/prod/wagons.json /app/data/prod/wagons.json
+
+# Create symbolic links from /app/src/data/prod to /app/data/prod
+# This ensures the application can find the files at either location
+RUN ln -sf /app/data/prod/coasters.json /app/src/data/prod/coasters.json
+RUN ln -sf /app/data/prod/wagons.json /app/src/data/prod/wagons.json
 
 # Expose production port
 EXPOSE 3051
 
-# Set NODE_ENV
+# Set Environment variables
 ENV NODE_ENV=production
+ENV DOCKER_ENV=true
 
 # Start production server
 CMD ["yarn", "prod"]

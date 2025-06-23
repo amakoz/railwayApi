@@ -9,16 +9,18 @@ const logger = setupLogging();
 
 // Ensure data directories exist
 const createDataDirectories = () => {
-  const devDir = path.dirname(config.dataPath.coasters);
-  const prodDir = path.dirname(config.dataPath.wagons);
+  const devCoastersDir = path.dirname(config.dataPath.coasters);
+  const devWagonsDir = path.dirname(config.dataPath.wagons);
+  const prodCoastersDir = path.dirname(config.dataPath.coasters);
+  const prodWagonsDir = path.dirname(config.dataPath.wagons);
 
-  if (!fs.existsSync(devDir)) {
-    fs.mkdirSync(devDir, { recursive: true });
-  }
-
-  if (!fs.existsSync(prodDir)) {
-    fs.mkdirSync(prodDir, { recursive: true });
-  }
+  // Ensure all necessary directories exist
+  [devCoastersDir, devWagonsDir, prodCoastersDir, prodWagonsDir].forEach(dir => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      logger.info(`Created directory: ${dir}`);
+    }
+  });
 };
 
 // Initialize data files if they don't exist
@@ -36,6 +38,10 @@ const initDataFiles = () => {
     fs.writeFileSync(config.dataPath.wagons, JSON.stringify([]));
     logger.info(`Created wagons data file at ${config.dataPath.wagons}`);
   }
+
+  // Log the current data file status
+  logger.info(`Using coasters data file: ${config.dataPath.coasters}`);
+  logger.info(`Using wagons data file: ${config.dataPath.wagons}`);
 };
 
 // Initialize the data system
