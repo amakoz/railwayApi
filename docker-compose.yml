@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  # Development mode
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3050:3050"
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=development
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6379
+    command: yarn dev
+    networks:
+      - railway-network
+
+  # Production mode
+  prod:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3051:3051"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6379
+    command: yarn prod
+    networks:
+      - railway-network
+
+networks:
+  railway-network:
+    driver: bridge
