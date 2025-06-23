@@ -1,6 +1,7 @@
 import { setupLogging } from '../utils/logger';
 import { getAllCoasters, getWagonsByCoasterId } from './dataService';
 import { Coaster, Wagon } from '../models';
+import { getConnectedNodesCount, isMaster } from './redisService';
 
 const logger = setupLogging();
 
@@ -11,6 +12,7 @@ const WAGON_REST_TIME = 5;          // 5 minutes rest time for each wagon
 
 interface CoasterStatus {
   id: string;
+  name?: string; // Optional name for display purposes
   godzinaOd: string;
   godzinaDo: string;
   liczbaWagonow: {
@@ -20,10 +22,26 @@ interface CoasterStatus {
   personel: {
     current: number;
     required: number;
+    status: 'OK' | 'BRAK' | 'NADMIAR';
+    difference: number;
   };
-  klienciDziennie: number;
-  status: string;
-  details: string;
+  klienci: {
+    dziennie: number;
+    możliwość_obsługi: number;
+    procent_realizacji: number;
+  };
+  status: 'OK' | 'PROBLEM';
+  details: string[];
+}
+
+interface SystemStatus {
+  timestamp: string;
+  connectedNodes: number;
+  isMasterNode: boolean;
+  coasterCount: number;
+  totalWagons: number;
+  totalPersonnel: number;
+  totalClients: number;
 }
 
 // Calculate time in minutes from a string like "8:00"
@@ -42,11 +60,7 @@ const calculateDailyCapacity = (
   const endMinutes = timeStringToMinutes(coaster.godziny_do);
   const operationMinutes = endMinutes - startMinutes;
 
-  if (operationMinutes <= 0) {
-    return 0;
-  }
-
-  if (wagons.length === 0) {
+  if (operationMinutes <= 0 || wagons.length === 0) {
     return 0;
   }
 
@@ -149,32 +163,47 @@ export const getCoasterStatus = (coaster: Coaster): CoasterStatus => {
   const currentPersonnel = coaster.liczba_personelu;
   const requiredPersonnel = calculateRequiredPersonnel(coaster, requiredWagons);
 
+  // Determine if there's a personnel shortage or excess
+  let personnelStatus: 'OK' | 'BRAK' | 'NADMIAR' = 'OK';
+  let personnelDifference = currentPersonnel - requiredPersonnel;
+
+  if (personnelDifference < 0) {
+    personnelStatus = 'BRAK';
+    personnelDifference = Math.abs(personnelDifference);
+  } else if (personnelDifference > requiredPersonnel * 0.5) { // More than 50% excess
+    personnelStatus = 'NADMIAR';
+  }
+
   // Determine status and details
-  let status = "OK";
-  let details = "";
+  let status: 'OK' | 'PROBLEM' = "OK";
+  const details: string[] = [];
 
   // Check for personnel issues
   if (currentPersonnel < requiredPersonnel) {
-    status = "Problem";
-    details += `Brakuje ${requiredPersonnel - currentPersonnel} pracowników. `;
+    status = "PROBLEM";
+    details.push(`Brakuje ${requiredPersonnel - currentPersonnel} pracowników`);
   } else if (currentPersonnel > requiredPersonnel * 1.5) { // 50% more than needed
-    status = "Problem";
-    details += `Nadmiar ${currentPersonnel - requiredPersonnel} pracowników. `;
+    status = "PROBLEM";
+    details.push(`Nadmiar ${currentPersonnel - requiredPersonnel} pracowników`);
   }
 
   // Check for wagon issues
   if (wagons.length < requiredWagons) {
-    status = "Problem";
-    details += `Brak ${requiredWagons - wagons.length} wagonów. `;
+    status = "PROBLEM";
+    details.push(`Brak ${requiredWagons - wagons.length} wagonów`);
   } else if (dailyCapacity > coaster.liczba_klientow * 2) { // More than 2x capacity
-    status = "Problem";
-    details += `Nadmiar ${wagons.length - requiredWagons} wagonów. `;
+    status = "PROBLEM";
+    details.push(`Nadmiar ${wagons.length - requiredWagons} wagonów`);
   }
 
   // If empty, set OK status
-  if (details === "") {
-    details = "Wszystko działa poprawnie.";
+  if (details.length === 0) {
+    details.push("Wszystko działa poprawnie");
   }
+
+  // Calculate percentage of client capacity fulfillment
+  const percentCapacity = dailyCapacity > 0 ?
+    Math.min(Math.round((dailyCapacity / coaster.liczba_klientow) * 100), 100) : 0;
 
   return {
     id: coaster.id,
@@ -187,30 +216,73 @@ export const getCoasterStatus = (coaster: Coaster): CoasterStatus => {
     personel: {
       current: currentPersonnel,
       required: requiredPersonnel,
+      status: personnelStatus,
+      difference: personnelDifference
     },
-    klienciDziennie: coaster.liczba_klientow,
+    klienci: {
+      dziennie: coaster.liczba_klientow,
+      możliwość_obsługi: dailyCapacity,
+      procent_realizacji: percentCapacity
+    },
     status,
     details,
   };
+};
+
+// Get overall system status
+const getSystemStatus = (): SystemStatus => {
+  const coasters = getAllCoasters();
+  const statuses = coasters.map(coaster => getCoasterStatus(coaster));
+
+  const totalWagons = statuses.reduce((sum, status) => sum + status.liczbaWagonow.current, 0);
+  const totalPersonnel = statuses.reduce((sum, status) => sum + status.personel.current, 0);
+  const totalClients = statuses.reduce((sum, status) => sum + status.klienci.dziennie, 0);
+
+  return {
+    timestamp: new Date().toISOString(),
+    connectedNodes: getConnectedNodesCount(),
+    isMasterNode: isMaster(),
+    coasterCount: coasters.length,
+    totalWagons,
+    totalPersonnel,
+    totalClients
+  };
+};
+
+// Format time as HH:MM
+const formatTime = () => {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
 };
 
 // Start monitoring and display stats
 const startMonitoring = () => {
   const displayStats = () => {
     const statuses = getCoasterStatuses();
+    const systemStatus = getSystemStatus();
+
     console.log("\n");
-    console.log(`[Godzina ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}]`);
+    console.log(`[Godzina ${formatTime()}]`);
+    console.log(`System status: ${systemStatus.connectedNodes} connected nodes, ${systemStatus.isMasterNode ? 'MASTER NODE' : 'WORKER NODE'}`);
+    console.log(`Total system capacity: ${statuses.length} coasters, ${systemStatus.totalWagons} wagons, ${systemStatus.totalPersonnel} personnel, ${systemStatus.totalClients} clients daily`);
+    console.log("\n");
+
+    if (statuses.length === 0) {
+      console.log("No coasters registered in the system");
+    }
 
     statuses.forEach(status => {
       console.log(`[Kolejka ${status.id}]`);
       console.log(`1. Godziny działania: ${status.godzinaOd} - ${status.godzinaDo}`);
       console.log(`2. Liczba wagonów: ${status.liczbaWagonow.current}/${status.liczbaWagonow.required}`);
       console.log(`3. Dostępny personel: ${status.personel.current}/${status.personel.required}`);
-      console.log(`4. Klienci dziennie: ${status.klienciDziennie}`);
+      console.log(`4. Klienci dziennie: ${status.klienci.dziennie}`);
       console.log(`5. Status: ${status.status}`);
 
       if (status.status !== "OK") {
-        console.log(`6. Problem: ${status.details}`);
+        console.log(`6. Problem: ${status.details.join(', ')}`);
       }
 
       console.log("\n");
@@ -225,5 +297,6 @@ const startMonitoring = () => {
 export const monitoringService = {
   getCoasterStatus,
   getCoasterStatuses,
+  getSystemStatus,
   startMonitoring,
 };
