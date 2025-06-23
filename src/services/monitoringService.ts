@@ -18,6 +18,7 @@ interface CoasterStatus {
   liczbaWagonow: {
     current: number;
     required: number;
+    safe: number; // Maximum number of wagons that can safely operate
   };
   personel: {
     current: number;
@@ -50,6 +51,13 @@ const timeStringToMinutes = (timeString: string): number => {
   return hours * 60 + minutes;
 };
 
+// Format minutes back to HH:MM time string
+const minutesToTimeString = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours}:${mins.toString().padStart(2, '0')}`;
+};
+
 // Calculate the number of clients a coaster can serve in a day
 const calculateDailyCapacity = (
   coaster: Coaster,
@@ -77,11 +85,15 @@ const calculateDailyCapacity = (
   // Add rest time for each round
   const totalRoundTime = roundTripTime + WAGON_REST_TIME;
 
+  // Make sure the last trip can finish before closing time
+  // Last trip should start at least roundTripTime minutes before closing
+  const safeOperationMinutes = Math.max(0, operationMinutes - roundTripTime);
+
   // Calculate how many rounds each wagon can make
-  const roundsPerWagon = operationMinutes / totalRoundTime;
+  const roundsPerWagon = Math.floor(safeOperationMinutes / totalRoundTime);
 
   // Calculate total daily capacity
-  const dailyCapacity = totalCapacity * roundsPerWagon;
+  const dailyCapacity = totalCapacity * roundsPerWagon * wagons.length;
 
   return Math.floor(dailyCapacity);
 };
@@ -109,8 +121,16 @@ const calculateRequiredWagons = (
   const trackLength = coaster.dl_trasy; // in meters
   const roundTripTime = (trackLength / avgWagonSpeed) / 60 + WAGON_REST_TIME; // in minutes
 
-  // Calculate rounds per day
-  const roundsPerDay = operationMinutes / roundTripTime;
+  // Make sure the last trip can finish before closing time
+  const safeOperationMinutes = Math.max(0, operationMinutes - (trackLength / avgWagonSpeed) / 60);
+
+  // Calculate rounds per day per wagon
+  const roundsPerDay = Math.floor(safeOperationMinutes / roundTripTime);
+
+  if (roundsPerDay <= 0) {
+    logger.warn(`Coaster ${coaster.id} has insufficient operating time for its track length`);
+    return 999; // Signal an error condition
+  }
 
   // Calculate required capacity per round
   const requiredCapacityPerRound = coaster.liczba_klientow / roundsPerDay;
@@ -119,6 +139,34 @@ const calculateRequiredWagons = (
   const requiredWagons = Math.ceil(requiredCapacityPerRound / avgWagonCapacity);
 
   return Math.max(1, requiredWagons); // At least 1 wagon
+};
+
+// Calculate the max number of wagons that can safely complete their routes
+const calculateMaxSafeWagons = (
+  coaster: Coaster,
+  avgWagonSpeed: number
+): number => {
+  const startMinutes = timeStringToMinutes(coaster.godziny_od);
+  const endMinutes = timeStringToMinutes(coaster.godziny_do);
+  const operationMinutes = endMinutes - startMinutes;
+
+  // Calculate time for one trip
+  const trackLength = coaster.dl_trasy; // in meters
+  const oneWayTripTime = (trackLength / avgWagonSpeed) / 60; // in minutes
+
+  // Check if there's enough time for at least one round trip
+  if (operationMinutes <= oneWayTripTime * 2 + WAGON_REST_TIME) {
+    logger.warn(`Coaster ${coaster.id} has insufficient operation time for a complete round trip`);
+    return 0;
+  }
+
+  // In theory, the maximum number of wagons is unlimited as they operate in parallel
+  // But we'll set a reasonable limit based on track length and safety considerations
+  // For simplicity, we'll assume a safety distance between wagons
+  const safetyMinDistance = 100; // meters between wagons
+  const maxSafeWagons = Math.floor(coaster.dl_trasy / safetyMinDistance);
+
+  return Math.max(1, maxSafeWagons); // At least 1 wagon
 };
 
 // Calculate required personnel for a coaster
@@ -147,7 +195,14 @@ export const getCoasterStatus = (coaster: Coaster): CoasterStatus => {
   if (wagons.length > 0) {
     avgWagonCapacity = wagons.reduce((sum, wagon) => sum + wagon.ilosc_miejsc, 0) / wagons.length;
     avgWagonSpeed = wagons.reduce((sum, wagon) => sum + wagon.predkosc_wagonu, 0) / wagons.length;
+  } else {
+    // Default values if no wagons
+    avgWagonCapacity = 30;
+    avgWagonSpeed = 1.0;
   }
+
+  // Calculate maximum safe number of wagons
+  const maxSafeWagons = calculateMaxSafeWagons(coaster, avgWagonSpeed);
 
   // Calculate actual daily capacity with current wagons
   const dailyCapacity = calculateDailyCapacity(coaster, wagons);
@@ -155,8 +210,8 @@ export const getCoasterStatus = (coaster: Coaster): CoasterStatus => {
   // Calculate required wagons to meet the client demand
   const requiredWagons = calculateRequiredWagons(
     coaster,
-    avgWagonCapacity || 30, // Default capacity if no wagons
-    avgWagonSpeed || 1.0    // Default speed if no wagons
+    avgWagonCapacity,
+    avgWagonSpeed
   );
 
   // Calculate current and required personnel
@@ -196,6 +251,12 @@ export const getCoasterStatus = (coaster: Coaster): CoasterStatus => {
     details.push(`Nadmiar ${wagons.length - requiredWagons} wagonów`);
   }
 
+  // Check if we have more wagons than can safely operate
+  if (wagons.length > maxSafeWagons) {
+    status = "PROBLEM";
+    details.push(`Zbyt wiele wagonów dla bezpiecznej operacji, maksimum: ${maxSafeWagons}`);
+  }
+
   // If empty, set OK status
   if (details.length === 0) {
     details.push("Wszystko działa poprawnie");
@@ -212,6 +273,7 @@ export const getCoasterStatus = (coaster: Coaster): CoasterStatus => {
     liczbaWagonow: {
       current: wagons.length,
       required: requiredWagons,
+      safe: maxSafeWagons
     },
     personel: {
       current: currentPersonnel,
@@ -276,9 +338,9 @@ const startMonitoring = () => {
     statuses.forEach(status => {
       console.log(`[Kolejka ${status.id}]`);
       console.log(`1. Godziny działania: ${status.godzinaOd} - ${status.godzinaDo}`);
-      console.log(`2. Liczba wagonów: ${status.liczbaWagonow.current}/${status.liczbaWagonow.required}`);
+      console.log(`2. Liczba wagonów: ${status.liczbaWagonow.current}/${status.liczbaWagonow.required} (max bezpiecznie: ${status.liczbaWagonow.safe})`);
       console.log(`3. Dostępny personel: ${status.personel.current}/${status.personel.required}`);
-      console.log(`4. Klienci dziennie: ${status.klienci.dziennie}`);
+      console.log(`4. Klienci dziennie: ${status.klienci.dziennie} (obsługa: ${Math.round(status.klienci.procent_realizacji)}%)`);
       console.log(`5. Status: ${status.status}`);
 
       if (status.status !== "OK") {

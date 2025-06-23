@@ -10,7 +10,7 @@ if (!fs.existsSync(logsDir)) {
 }
 
 // Create different transports for different log levels
-const setupLogging = () => {
+export const setupLogging = () => {
   // File transports (for both dev and prod)
   const fileTransports = [
     new winston.transports.File({
@@ -33,27 +33,32 @@ const setupLogging = () => {
     );
   }
 
-  // Console transports - different based on environment
+  // Console transport - different behavior for dev and prod
+  // Dev: log all levels to console
+  // Prod: log only warn and error to console
   const consoleTransport = new winston.transports.Console({
+    level: config.isDev ? 'info' : 'warn',
     format: winston.format.combine(
       winston.format.colorize(),
-      winston.format.simple()
+      winston.format.timestamp(),
+      winston.format.printf(({ timestamp, level, message }) => {
+        return `${timestamp} ${level}: ${message}`;
+      })
     ),
-    // In dev mode, log everything to console
-    // In prod mode, only log warns and errors
-    level: config.isDev ? 'info' : 'warn',
   });
 
-  // Create the logger
+  // Create logger
   const logger = winston.createLogger({
+    level: config.isDev ? 'info' : 'warn',
     format: winston.format.combine(
       winston.format.timestamp(),
       winston.format.json()
     ),
+    defaultMeta: { service: 'railway-coaster' },
     transports: [...fileTransports, consoleTransport],
   });
 
   return logger;
 };
 
-export { setupLogging };
+export default setupLogging;
