@@ -12,6 +12,7 @@ System Kolejek Górskich to API zarządzające kolejkami górskimi oraz przypisa
 6. [Przykłady użycia (cURL)](#przykłady-użycia-curl)
 7. [Konfiguracja środowiska](#konfiguracja-środowiska)
 8. [System rozproszony](#system-rozproszony)
+9. [Zmienne w API](#zmienne-w-api)
 
 ## Opis systemu
 
@@ -107,11 +108,11 @@ docker-compose down
 - **Dane wejściowe**:
   ```json
   {
-    "liczba_personelu": 16,
-    "liczba_klientow": 60000,
-    "dl_trasy": 1800,
-    "godziny_od": "8:00",
-    "godziny_do": "16:00"
+    "staffCount": 16,
+    "clientCount": 60000,
+    "trackLength": 1800,
+    "hoursFrom": "8:00",
+    "hoursTo": "16:00"
   }
   ```
 
@@ -121,13 +122,13 @@ docker-compose down
 - **Dane wejściowe**:
   ```json
   {
-    "liczba_personelu": 20,
-    "liczba_klientow": 70000,
-    "godziny_od": "9:00",
-    "godziny_do": "17:00"
+    "staffCount": 20,
+    "clientCount": 70000,
+    "hoursFrom": "9:00",
+    "hoursTo": "17:00"
   }
   ```
-- **Uwaga**: Długość trasy (`dl_trasy`) nie może być zmieniona
+- **Uwaga**: Długość trasy (`trackLength`) nie może być zmieniona
 
 ### Pobieranie wszystkich kolejek górskich
 - **Endpoint**: `GET /api/coasters`
@@ -143,8 +144,8 @@ docker-compose down
 - **Dane wejściowe**:
   ```json
   {
-    "ilosc_miejsc": 32,
-    "predkosc_wagonu": 1.2
+    "seatCount": 32,
+    "wagonSpeed": 1.2
   }
   ```
 
@@ -163,11 +164,11 @@ docker-compose down
 curl -X POST http://localhost:3050/api/coasters \
   -H "Content-Type: application/json" \
   -d '{
-    "liczba_personelu": 16,
-    "liczba_klientow": 60000,
-    "dl_trasy": 1800,
-    "godziny_od": "8:00",
-    "godziny_do": "16:00"
+    "staffCount": 16,
+    "clientCount": 60000,
+    "trackLength": 1800,
+    "hoursFrom": "8:00",
+    "hoursTo": "16:00"
   }'
 ```
 
@@ -176,10 +177,10 @@ curl -X POST http://localhost:3050/api/coasters \
 curl -X PUT http://localhost:3050/api/coasters/{coasterId} \
   -H "Content-Type: application/json" \
   -d '{
-    "liczba_personelu": 20,
-    "liczba_klientow": 70000,
-    "godziny_od": "9:00",
-    "godziny_do": "17:00"
+    "staffCount": 20,
+    "clientCount": 70000,
+    "hoursFrom": "9:00",
+    "hoursTo": "17:00"
   }'
 ```
 
@@ -198,8 +199,8 @@ curl -X GET http://localhost:3050/api/coasters/{coasterId}
 curl -X POST http://localhost:3050/api/coasters/{coasterId}/wagons \
   -H "Content-Type: application/json" \
   -d '{
-    "ilosc_miejsc": 32,
-    "predkosc_wagonu": 1.2
+    "seatCount": 32,
+    "wagonSpeed": 1.2
   }'
 ```
 
@@ -261,3 +262,26 @@ System może działać w trybie rozproszonym, gdzie każda kolejka górska dzia�
 - System monitoruje liczbę klientów, których kolejka powinna obsłużyć w ciągu dnia
 - Jeśli kolejka nie będzie w stanie obsłużyć wszystkich klientów, system informuje o brakach
 - Jeśli kolejka ma możliwość obsłużenia ponad dwukrotnie większej liczby klientów, system informuje o nadmiarze zasobów
+
+## Zmienne w API
+
+System używa angielskich nazw zmiennych w kodzie i API, ale zachowuje polskie komunikaty w logach i interfejsie użytkownika. Poniżej znajduje się mapowanie pomiędzy polskimi i angielskimi nazwami zmiennych:
+
+### Kolejki górskie (Coaster)
+
+| Polski          | Angielski     | Opis                                 |
+|-----------------|---------------|------------------------------------- |
+| liczba_personelu| staffCount    | Liczba osób personelu przypisana do kolejki |
+| liczba_klientow | clientCount   | Liczba klientów dziennie do obsłużenia |
+| dl_trasy        | trackLength   | Długość trasy kolejki w metrach     |
+| godziny_od      | hoursFrom     | Godzina rozpoczęcia pracy kolejki (format "HH:MM") |
+| godziny_do      | hoursTo       | Godzina zakończenia pracy kolejki (format "HH:MM") |
+
+### Wagony (Wagon)
+
+| Polski          | Angielski     | Opis                                 |
+|-----------------|---------------|------------------------------------- |
+| ilosc_miejsc    | seatCount     | Liczba miejsc dostępnych w wagonie   |
+| predkosc_wagonu | wagonSpeed    | Prędkość wagonu w metrach na sekundę |
+
+Wszystkie zapytania do API muszą używać angielskich nazw zmiennych. System wewnętrznie używa angielskich nazw, ale wyświetla komunikaty w języku polskim.
